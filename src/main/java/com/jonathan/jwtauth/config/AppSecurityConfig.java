@@ -1,6 +1,7 @@
 package com.jonathan.jwtauth.config;
 
 import com.jonathan.jwtauth.filter.AppAuthenticationFilter;
+import com.jonathan.jwtauth.filter.AppAuthorizationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
@@ -29,14 +30,20 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        AppAuthenticationFilter appAuthFilter = new AppAuthenticationFilter(authenticationManager());
+        appAuthFilter.setFilterProcessesUrl("/api/login");
+
         http
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests()
+                        .antMatchers("/api/login").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/**").hasAuthority("ROLE_ADMIN")
-                        .anyRequest().permitAll()
+                        .antMatchers(HttpMethod.POST, "/api/user/**").hasAuthority("ROLE_ADMIN")
+                        .anyRequest().authenticated()
                         .and()
-                .addFilter(new AppAuthenticationFilter(authenticationManager()));
+                .addFilter(appAuthFilter)
+                .addFilterBefore(new AppAuthorizationFilter(), AppAuthenticationFilter.class);
     }
 
     @Bean
