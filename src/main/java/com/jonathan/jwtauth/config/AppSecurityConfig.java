@@ -20,6 +20,7 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
+    private final AppAuthorizationFilter appAuthorizationFilter;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -30,20 +31,21 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        AppAuthenticationFilter appAuthFilter = new AppAuthenticationFilter(authenticationManager());
-        appAuthFilter.setFilterProcessesUrl("/api/login");
+        AppAuthenticationFilter appAuthenticationFilter = new AppAuthenticationFilter(authenticationManager());
+        appAuthenticationFilter.setFilterProcessesUrl("/api/login");
 
         http
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests()
                         .antMatchers("/api/login").permitAll()
+                        .antMatchers("/api/user/register").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/**").hasAuthority("ROLE_ADMIN")
                         .antMatchers(HttpMethod.POST, "/api/user/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                         .and()
-                .addFilter(appAuthFilter)
-                .addFilterBefore(new AppAuthorizationFilter(), AppAuthenticationFilter.class);
+                .addFilter(appAuthenticationFilter)
+                .addFilterBefore(appAuthorizationFilter, AppAuthenticationFilter.class);
     }
 
     @Bean

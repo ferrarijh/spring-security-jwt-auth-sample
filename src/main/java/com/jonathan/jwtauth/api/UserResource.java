@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 
 @RestController
@@ -24,9 +25,9 @@ public class UserResource {
         return ResponseEntity.ok().body(userService.getAllUsers());
     }
 
-    @PostMapping(path = "/user")
+    @PostMapping(path = "/user/register")
     public ResponseEntity<AppUser> registerUser(@RequestBody AppUser user){
-        URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user").toUriString());
+        URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user/register").toUriString());
         return ResponseEntity.created(uri).body(userService.saveUser(user));
     }
 
@@ -41,6 +42,7 @@ public class UserResource {
         userService.addRoleToUser(form.getUsername(), form.getRoleName());
         return ResponseEntity.ok().build();
     }
+
 }
 
 @Data
