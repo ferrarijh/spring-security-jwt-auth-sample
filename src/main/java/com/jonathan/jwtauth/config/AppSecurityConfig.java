@@ -13,6 +13,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final AppAuthorizationFilter appAuthorizationFilter;
+    private final AccessDeniedHandler accessDeniedHandler;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -37,10 +40,13 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .exceptionHandling()
+                        .accessDeniedHandler(accessDeniedHandler)
+                        .and()
                 .authorizeRequests()
                         .antMatchers("/api/login").permitAll()
                         .antMatchers("/api/user/register").permitAll()
-                        .antMatchers(HttpMethod.GET, "/api/user/**").hasAuthority("ROLE_ADMIN")
+                        .antMatchers(HttpMethod.GET, "/api/user/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_ADMIN_TRAINEE")
                         .antMatchers(HttpMethod.POST, "/api/user/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                         .and()

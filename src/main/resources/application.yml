@@ -14,3 +14,7 @@ spring:
   jackson:
     serialization:
       indent_output: true
+
+logging:
+  level:
+    org.springframework.security: debug
