@@ -1,8 +1,7 @@
-package com.jonathan.jwtauth.filter;
+package com.jonathan.jwtauth.security.filter;
 
-import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.HttpHeaders;
@@ -31,6 +30,7 @@ import java.util.stream.Collectors;
 public class AppAuthorizationFilter extends OncePerRequestFilter {
 
     private final ObjectMapper mapper;
+    private final JWTVerifier jwtVerifier;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -39,8 +39,6 @@ public class AppAuthorizationFilter extends OncePerRequestFilter {
         if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             try {
                 String token = authorizationHeader.substring("Bearer ".length());
-                Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
-                JWTVerifier jwtVerifier = JWT.require(algorithm).build();
                 DecodedJWT decodedJWT = jwtVerifier.verify(token);
                 String username = decodedJWT.getSubject();
                 String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
@@ -49,7 +47,10 @@ public class AppAuthorizationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken upat = new UsernamePasswordAuthenticationToken(username, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(upat);
 
-            } catch (Exception e) {
+            } catch (JWTVerificationException e) {
+                /* catch token-verification-related exceptions here. */
+                /* AccessDeniedException will be handled by custom `AccessDeniedHandler`(declared bean in `AppRestExceptionHandler.class`) */
+
                 e.printStackTrace();
                 response.setStatus(HttpStatus.FORBIDDEN.value());
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);

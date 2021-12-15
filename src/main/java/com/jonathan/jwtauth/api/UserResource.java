@@ -1,16 +1,18 @@
 package com.jonathan.jwtauth.api;
 
-import com.jonathan.jwtauth.domain.AppUser;
-import com.jonathan.jwtauth.domain.AppUserRole;
+import com.jonathan.jwtauth.domain.dto.RefreshTokenRequestDto;
+import com.jonathan.jwtauth.domain.dto.RefreshTokenResponseDto;
+import com.jonathan.jwtauth.domain.dto.UserAddRoleRequestDto;
+import com.jonathan.jwtauth.domain.entity.AppUser;
+import com.jonathan.jwtauth.domain.entity.AppUserRole;
 import com.jonathan.jwtauth.service.AppUserService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 
 @RestController
@@ -28,25 +30,27 @@ public class UserResource {
     @PostMapping(path = "/user/register")
     public ResponseEntity<AppUser> registerUser(@RequestBody AppUser user){
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/user/register").toUriString());
-        return ResponseEntity.created(uri).body(userService.saveUser(user));
-    }
-
-    @PostMapping(path = "/role")
-    public ResponseEntity<AppUserRole> saveRole(@RequestBody AppUserRole role){
-        URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/role").toUriString());
-        return ResponseEntity.created(uri).body(userService.saveRole(role));
+        return ResponseEntity.created(uri).body(userService.registerUser(user));
     }
 
     @PostMapping(path = "/user/add-role")
-    public ResponseEntity<?> userAddRole(@RequestBody UserAddRoleForm form){
+    public ResponseEntity<?> addRoleToUser(@RequestBody UserAddRoleRequestDto form){
         userService.addRoleToUser(form.getUsername(), form.getRoleName());
         return ResponseEntity.ok().build();
     }
 
-}
+    @PostMapping(path = "/role")
+    public ResponseEntity<AppUserRole> addRole(@RequestBody AppUserRole role){
+        URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/role").toUriString());
+        return ResponseEntity.created(uri).body(userService.addRole(role));
+    }
 
-@Data
-class UserAddRoleForm{
-    private String username;
-    private String roleName;
+    @PostMapping(
+            path = "/token/refresh",
+            consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE},
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<RefreshTokenResponseDto> refreshAccessToken(RefreshTokenRequestDto requestDto){
+        return ResponseEntity.ok().body(userService.refreshAccessToken(requestDto));
+    }
 }

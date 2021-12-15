@@ -1,7 +1,15 @@
 package com.jonathan.jwtauth.service;
 
-import com.jonathan.jwtauth.domain.AppUser;
-import com.jonathan.jwtauth.domain.AppUserRole;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.common.net.HttpHeaders;
+import com.jonathan.jwtauth.domain.dto.RefreshTokenRequestDto;
+import com.jonathan.jwtauth.domain.dto.RefreshTokenResponseDto;
+import com.jonathan.jwtauth.domain.entity.AppUser;
+import com.jonathan.jwtauth.domain.entity.AppUserRole;
 import com.jonathan.jwtauth.repo.RoleRepository;
 import com.jonathan.jwtauth.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +22,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,14 +37,16 @@ public class AppUserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JWTVerifier jwtVerifier;
+    private final Algorithm algorithm;
 
-    public AppUser saveUser(AppUser user){
+    public AppUser registerUser(AppUser user){
         user.getRoles().add(roleRepository.findByName("ROLE_USER"));
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
-    public AppUserRole saveRole(AppUserRole role){
+    public AppUserRole addRole(AppUserRole role){
         return roleRepository.save(role);
     }
 
@@ -50,6 +62,19 @@ public class AppUserService implements UserDetailsService {
 
     public List<AppUser> getAllUsers(){
         return userRepository.findAll();
+    }
+
+    public RefreshTokenResponseDto refreshAccessToken(RefreshTokenRequestDto requestDto) throws JWTVerificationException {
+        if(!requestDto.getGrant_type().equals("refresh_token"))
+            throw new JWTVerificationException("grant type must be 'refresh_token'");
+
+        DecodedJWT decodedJWT = jwtVerifier.verify(requestDto.getRefresh_token());
+        String newAccessToken = JWT.create()
+                .withSubject(decodedJWT.getSubject())
+                .withExpiresAt(new Date(System.currentTimeMillis() + 20 * 1000))
+                .withClaim("roles", decodedJWT.getClaim("roles").asList(String.class))
+                .sign(algorithm);
+        return new RefreshTokenResponseDto(newAccessToken, "example", 600L);
     }
 
     @Override

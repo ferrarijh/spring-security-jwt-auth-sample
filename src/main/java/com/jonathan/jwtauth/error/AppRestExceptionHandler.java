@@ -1,5 +1,6 @@
 package com.jonathan.jwtauth.error;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -35,15 +36,19 @@ public class AppRestExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new AppError(LocalDateTime.now(), ex.getMessage()));
     }
 
+    @ExceptionHandler(JWTVerificationException.class)
+    protected ResponseEntity<AppError> handleJwtVerificationException(JWTVerificationException ex){
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new AppError(LocalDateTime.now(), ex.getMessage()));
+    }
+
     @Bean
     public AccessDeniedHandler accessDeniedHandler(){
-        return new AccessDeniedHandler(){
-            @Override
-            public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
-                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                mapper.writer().writeValue(response.getOutputStream(), new AppError(LocalDateTime.now(), accessDeniedException.getMessage()));
-            }
+        return (request, response, accessDeniedException) -> {
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            mapper.writer().writeValue(response.getOutputStream(), new AppError(LocalDateTime.now(), accessDeniedException.getMessage()));
         };
     }
 }

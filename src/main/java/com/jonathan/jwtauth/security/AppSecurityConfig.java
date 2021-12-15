@@ -1,7 +1,7 @@
-package com.jonathan.jwtauth.config;
+package com.jonathan.jwtauth.security;
 
-import com.jonathan.jwtauth.filter.AppAuthenticationFilter;
-import com.jonathan.jwtauth.filter.AppAuthorizationFilter;
+import com.jonathan.jwtauth.security.filter.AppAuthenticationFilter;
+import com.jonathan.jwtauth.security.filter.AppAuthorizationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
@@ -13,7 +13,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 @EnableWebSecurity
@@ -46,6 +45,7 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                         .antMatchers("/api/login").permitAll()
                         .antMatchers("/api/user/register").permitAll()
+                        .antMatchers("/api/token/refresh").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_ADMIN_TRAINEE")
                         .antMatchers(HttpMethod.POST, "/api/user/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()

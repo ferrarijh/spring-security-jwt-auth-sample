@@ -1,7 +1,7 @@
 package com.jonathan.jwtauth;
 
-import com.jonathan.jwtauth.domain.AppUser;
-import com.jonathan.jwtauth.domain.AppUserRole;
+import com.jonathan.jwtauth.domain.entity.AppUser;
+import com.jonathan.jwtauth.domain.entity.AppUserRole;
 import com.jonathan.jwtauth.service.AppUserService;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -20,13 +20,13 @@ public class JwtAuthApplication {
 	@Bean
 	public ApplicationRunner applicationRunner(AppUserService userService){
 		return (args) -> {
-			userService.saveRole(new AppUserRole(null, "ROLE_USER"));
-			userService.saveRole(new AppUserRole(null, "ROLE_ADMIN"));
-			userService.saveRole(new AppUserRole(null, "ROLE_ADMIN_TRAINEE"));
+			userService.addRole(new AppUserRole(null, "ROLE_USER"));
+			userService.addRole(new AppUserRole(null, "ROLE_ADMIN"));
+			userService.addRole(new AppUserRole(null, "ROLE_ADMIN_TRAINEE"));
 
-			userService.saveUser(new AppUser(null, "admin", "password", new ArrayList<>()));
-			userService.saveUser(new AppUser(null, "elise", "password", new ArrayList<>()));
-			userService.saveUser(new AppUser(null, "jiho", "password", new ArrayList<>()));
+			userService.registerUser(new AppUser(null, "admin", "password", new ArrayList<>()));
+			userService.registerUser(new AppUser(null, "elise", "password", new ArrayList<>()));
+			userService.registerUser(new AppUser(null, "jiho", "password", new ArrayList<>()));
 
 			userService.addRoleToUser("admin", "ROLE_ADMIN");
 			userService.addRoleToUser("elise", "ROLE_ADMIN_TRAINEE");
