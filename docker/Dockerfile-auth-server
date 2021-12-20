@@ -1,0 +1,12 @@
+FROM openjdk:8-alpine
+
+ARG JAR_FILE=/build/libs/*.jar
+ARG CONFIG_FILE=/docker/application.yml
+
+RUN mkdir app
+WORKDIR /app
+
+COPY ${JAR_FILE} /app/app.jar
+COPY ${CONFIG_FILE} /app/application.yml
+
+ENTRYPOINT ["java","-jar","app.jar","--spring.config.location=/app/application.yml"]
