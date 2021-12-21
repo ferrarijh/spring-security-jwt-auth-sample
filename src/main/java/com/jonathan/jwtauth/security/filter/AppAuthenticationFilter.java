@@ -24,20 +24,28 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
+//@Component
 public class AppAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-    private final AuthenticationManager authenticationManager;
+    private final ObjectMapper mapper;
+
+    //field `authenticationManager` must be initialized upon filter initialization
+//    @Autowired
+    @Override
+    public void setAuthenticationManager(AuthenticationManager authenticationManager) {
+        super.setAuthenticationManager(authenticationManager);
+    }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
-        return authenticationManager.authenticate(token);
+        return this.getAuthenticationManager().authenticate(token);
     }
 
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication auth) throws IOException, ServletException {
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication auth) throws IOException {
         //generate, sign, send token
         User user = (User) auth.getPrincipal();
 
@@ -65,6 +73,6 @@ public class AppAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         tokenMap.put("access_token", accessToken);
         tokenMap.put("refresh_token", refreshToken);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        new ObjectMapper().writer().writeValue(response.getOutputStream(), tokenMap);
+        mapper.writer().writeValue(response.getOutputStream(), tokenMap);
     }
 }

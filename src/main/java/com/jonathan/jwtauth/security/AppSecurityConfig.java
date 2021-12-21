@@ -1,5 +1,6 @@
 package com.jonathan.jwtauth.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jonathan.jwtauth.security.filter.AppAuthenticationFilter;
 import com.jonathan.jwtauth.security.filter.AppAuthorizationFilter;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,13 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
-    private final AppAuthorizationFilter appAuthorizationFilter;
     private final AccessDeniedHandler accessDeniedHandler;
+    private final AppAuthorizationFilter appAuthorizationFilter;
+    private final ObjectMapper mapper;
+
+    /* AppAuthenticationFilter depends on AuthenticationManager, whose instance is held by WebSecurityConfigurerAdapter. */
+    /* Thus, AppAuthentication Filter instance cannot be injected to prevent cyclic dependency. */
+//    private final AppAuthenticationFilter appAuthenticationFilter;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -33,7 +39,8 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        AppAuthenticationFilter appAuthenticationFilter = new AppAuthenticationFilter(authenticationManager());
+        AppAuthenticationFilter appAuthenticationFilter = new AppAuthenticationFilter(mapper);
+        appAuthenticationFilter.setAuthenticationManager(authenticationManager());
         appAuthenticationFilter.setFilterProcessesUrl("/api/login");
 
         http
@@ -52,10 +59,5 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
                         .and()
                 .addFilter(appAuthenticationFilter)
                 .addFilterBefore(appAuthorizationFilter, AppAuthenticationFilter.class);
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager() throws Exception{
-        return super.authenticationManager();
     }
 }
